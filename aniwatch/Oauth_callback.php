@@ -1,12 +1,10 @@
 <?php
 // ═══════════════════════════════════════════════════════════════
-//  oauth_callback.php
-//  Step 2: Provider redirects back here with ?code=&state=
-//  We exchange the code for a token, fetch the user's profile,
-//  then log them in or auto-register them.
+//  oauth_callback.php  –  Rewritten for PDO  ($pdo)
+//  Provider redirects back here with ?code=&state=
 // ═══════════════════════════════════════════════════════════════
 session_start();
-require_once __DIR__ . '/db.php';   // provides $conn (mysqli)
+require_once __DIR__ . '/db.php';          // gives us $pdo  (PDO)
 $config = require __DIR__ . '/oauth_config.php';
 
 // ── 1. Validate provider & CSRF state ─────────────────────────
@@ -15,17 +13,16 @@ $code     = $_GET['code']  ?? null;
 $state    = $_GET['state'] ?? null;
 
 if (
-    !array_key_exists($provider, $config)  ||
-    !$code                                  ||
-    !$state                                 ||
-    empty($_SESSION['oauth_state'])         ||
+    !array_key_exists($provider, $config)   ||
+    !$code                                   ||
+    !$state                                  ||
+    empty($_SESSION['oauth_state'])          ||
     !hash_equals($_SESSION['oauth_state'], $state)
 ) {
-    header('Location: login.html?error=oauth_failed');
+    header('Location: login.php?error=oauth_failed');
     exit;
 }
 
-// Clear one-time state
 unset($_SESSION['oauth_state'], $_SESSION['oauth_provider']);
 
 // ── 2. Exchange authorization code for access token ───────────
@@ -38,21 +35,20 @@ $tokenResponse = oauthPost($config[$provider]['token_url'], [
 ], $provider === 'github' ? ['Accept: application/json'] : []);
 
 $accessToken = $tokenResponse['access_token'] ?? null;
-
 if (!$accessToken) {
-    header('Location: login.html?error=token_failed');
+    header('Location: login.php?error=token_failed');
     exit;
 }
 
 // ── 3. Fetch user profile from the provider ───────────────────
 $userInfo = oauthGet($config[$provider]['userinfo_url'], $accessToken, $provider);
 
-// Normalize fields (each provider uses different key names)
-$email      = $userInfo['email']   ?? null;
-$name       = $userInfo['name']    ?? ($userInfo['login'] ?? 'User'); // GitHub uses 'login'
+// Normalize — each provider uses different key names
+$email      = $userInfo['email']  ?? null;
+$name       = $userInfo['name']   ?? ($userInfo['login'] ?? 'User'); // GitHub uses 'login'
 $providerId = (string)($userInfo['sub'] ?? $userInfo['id'] ?? '');
 
-// GitHub: email may be private — fetch from the /user/emails endpoint
+// GitHub: email may be private — fetch from /user/emails endpoint
 if ($provider === 'github' && !$email) {
     $emails = oauthGet('https://api.github.com/user/emails', $accessToken, 'github');
     foreach ($emails as $entry) {
@@ -64,49 +60,37 @@ if ($provider === 'github' && !$email) {
 }
 
 if (!$email) {
-    // User refused to share their email — cannot proceed
-    header('Location: login.html?error=no_email');
+    header('Location: login.php?error=no_email');
     exit;
 }
 
-// ── 4. Look up or create the user in the database ─────────────
-// Assumes your users table has at least: id, username, email
-// Run the ALTER statements in schema_oauth_patch.sql if needed.
+// ── 4. Look up or create the user  (PDO version) ──────────────
+$stmt = $pdo->prepare("SELECT id, username FROM users WHERE email = ? LIMIT 1");
+$stmt->execute([$email]);
+$user = $stmt->fetch();   // PDO::FETCH_ASSOC is set in db.php
 
-$stmt = $conn->prepare("SELECT id, username FROM users WHERE email = ? LIMIT 1");
-$stmt->bind_param('s', $email);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows > 0) {
-    // ── Existing user: log them in ─────────────────────────────
-    $user = $result->fetch_assoc();
-
-    // Optionally update provider info in case they switched providers
-    $upd = $conn->prepare(
-        "UPDATE users SET provider = ?, provider_id = ? WHERE id = ?"
-    );
-    $upd->bind_param('ssi', $provider, $providerId, $user['id']);
-    $upd->execute();
+if ($user) {
+    // Existing user — update provider info in case they switched
+    $upd = $pdo->prepare("UPDATE users SET provider = ?, provider_id = ? WHERE id = ?");
+    $upd->execute([$provider, $providerId, $user['id']]);
 
 } else {
-    // ── New user: auto-register them ──────────────────────────
-    $username = generateUniqueUsername($name, $conn);
+    // New user — auto-register (password = NULL, allowed after schema patch)
+    $username = generateUniqueUsername($name, $pdo);
 
-    $insert = $conn->prepare(
-        "INSERT INTO users (username, email, provider, provider_id, created_at)
-         VALUES (?, ?, ?, ?, NOW())"
+    $insert = $pdo->prepare(
+        "INSERT INTO users (username, email, password, provider, provider_id, created_at)
+         VALUES (?, ?, NULL, ?, ?, NOW())"
     );
-    $insert->bind_param('ssss', $username, $email, $provider, $providerId);
-    $insert->execute();
+    $insert->execute([$username, $email, $provider, $providerId]);
 
     $user = [
-        'id'       => $conn->insert_id,
+        'id'       => (int) $pdo->lastInsertId(),
         'username' => $username,
     ];
 }
 
-// ── 5. Start the session and redirect to the app ──────────────
+// ── 5. Start session and redirect ─────────────────────────────
 $_SESSION['user_id']  = $user['id'];
 $_SESSION['username'] = $user['username'];
 $_SESSION['email']    = $email;
@@ -119,9 +103,6 @@ exit;
 //  Helper functions
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * POST request via cURL, returns decoded JSON array.
- */
 function oauthPost(string $url, array $data, array $extraHeaders = []): array
 {
     $ch = curl_init($url);
@@ -141,21 +122,15 @@ function oauthPost(string $url, array $data, array $extraHeaders = []): array
     return json_decode($response, true) ?? [];
 }
 
-/**
- * GET request via cURL with Bearer token, returns decoded JSON array.
- */
 function oauthGet(string $url, string $token, string $provider): array
 {
     $headers = [
         'Authorization: Bearer ' . $token,
         'Accept: application/json',
     ];
-
-    // GitHub requires a User-Agent header
     if ($provider === 'github') {
-        $headers[] = 'User-Agent: AniWatch-OAuth';
+        $headers[] = 'User-Agent: AniWatch-OAuth';   // GitHub requires User-Agent
     }
-
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -168,29 +143,17 @@ function oauthGet(string $url, string $token, string $provider): array
     return json_decode($response, true) ?? [];
 }
 
-/**
- * Turn a display name into a unique DB-safe username.
- * e.g. "John Doe" → "John_Doe", or "John_Doe2" if taken.
- */
-function generateUniqueUsername(string $displayName, mysqli $conn): string
+function generateUniqueUsername(string $displayName, PDO $pdo): string
 {
-    // Strip non-alphanumeric/underscore chars, replace spaces with underscores
-    $base = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', $displayName));
-    $base = $base ?: 'user';
-
+    $base     = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', $displayName));
+    $base     = $base ?: 'user';
     $username = $base;
     $i        = 2;
 
     while (true) {
-        $check = $conn->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
-        $check->bind_param('s', $username);
-        $check->execute();
-        $check->store_result();
-
-        if ($check->num_rows === 0) {
-            break; // username is free
-        }
-
+        $check = $pdo->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+        $check->execute([$username]);
+        if (!$check->fetch()) break;
         $username = $base . $i++;
     }
 

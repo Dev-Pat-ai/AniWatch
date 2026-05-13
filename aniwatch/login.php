@@ -1,12 +1,10 @@
 <?php
 // ============================================================
-//  login.php  |  Login & Register Page
-//  AniWatch PH
+//  login.php  |  Login & Register — with OAuth social buttons
 // ============================================================
 
 session_start();
 
-// Already logged in? Go home
 if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
@@ -16,16 +14,26 @@ require_once 'db.php';
 
 $error   = '';
 $success = '';
-$active  = ''; // toggles .active class for register panel
+$active  = '';
+
+// ── OAuth error messages passed back via ?error= ─────────────
+$oauthErrors = [
+    'oauth_failed'     => 'OAuth sign-in failed. Please try again.',
+    'token_failed'     => 'Could not get access token. Try again.',
+    'no_email'         => 'Your account has no public email. Use a different method.',
+    'invalid_provider' => 'Unknown sign-in provider.',
+];
+if (!empty($_GET['error']) && isset($oauthErrors[$_GET['error']])) {
+    $error = $oauthErrors[$_GET['error']];
+}
 
 // ── Handle REGISTER ──────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'register') {
-    $active   = 'active'; // keep register panel open on error
+    $active   = 'active';
     $username = trim($_POST['username'] ?? '');
     $email    = trim($_POST['email']    ?? '');
     $password =       $_POST['password'] ?? '';
 
-    // Validation
     if (empty($username) || empty($email) || empty($password)) {
         $error = "All fields are required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -33,20 +41,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } elseif (strlen($password) < 6) {
         $error = "Password must be at least 6 characters.";
     } else {
-        // Check if username or email already exists
         $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
         $stmt->execute([$username, $email]);
 
         if ($stmt->fetch()) {
             $error = "Username or email is already taken.";
         } else {
-            // Hash password & insert using prepared statement
             $hashed = password_hash($password, PASSWORD_DEFAULT);
             $insert = $pdo->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
             $insert->execute([$username, $email, $hashed]);
 
             $success = "Account created! You can now log in.";
-            $active  = ''; // switch to login panel
+            $active  = '';
         }
     }
 }
@@ -63,11 +69,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt->execute([$username]);
         $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password'])) {
+        if ($user && $user['password'] !== null && password_verify($password, $user['password'])) {
             $_SESSION['user_id']  = $user['id'];
             $_SESSION['username'] = $user['username'];
             header("Location: index.php");
             exit();
+        } elseif ($user && $user['password'] === null) {
+            // OAuth-only account — no password set
+            $error = "This account uses social login. Please use the social button below.";
         } else {
             $error = "Invalid username or password.";
         }
@@ -113,11 +122,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </div>
             <button type="submit" class="btn">Login</button>
             <p class="social-icon">Or Login with social platforms</p>
+
+            <!-- ── OAuth Social Buttons ── -->
             <div class="social-icons">
-                <a href="#"><i class="fa-brands fa-google"></i></a>
-                <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
-                <a href="#"><i class="fa-brands fa-github"></i></a>
-                <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                <a href="oauth_init.php?provider=google"   title="Login with Google">
+                    <i class="fa-brands fa-google"></i>
+                </a>
+                <a href="oauth_init.php?provider=facebook" title="Login with Facebook">
+                    <i class="fa-brands fa-facebook-f"></i>
+                </a>
+                <a href="oauth_init.php?provider=github"   title="Login with GitHub">
+                    <i class="fa-brands fa-github"></i>
+                </a>
+                <a href="oauth_init.php?provider=linkedin" title="Login with LinkedIn">
+                    <i class="fa-brands fa-linkedin-in"></i>
+                </a>
             </div>
         </form>
     </div>
@@ -148,26 +167,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </div>
             <button type="submit" class="btn">Register</button>
             <p class="social-icon">Or Register with social platforms</p>
+
+            <!-- ── OAuth Social Buttons (same endpoints — auto-registers new users) ── -->
             <div class="social-icons">
-                <a href="#"><i class="fa-brands fa-google"></i></a>
-                <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
-                <a href="#"><i class="fa-brands fa-github"></i></a>
-                <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                <a href="oauth_init.php?provider=google"   title="Register with Google">
+                    <i class="fa-brands fa-google"></i>
+                </a>
+                <a href="oauth_init.php?provider=facebook" title="Register with Facebook">
+                    <i class="fa-brands fa-facebook-f"></i>
+                </a>
+                <a href="oauth_init.php?provider=github"   title="Register with GitHub">
+                    <i class="fa-brands fa-github"></i>
+                </a>
+                <a href="oauth_init.php?provider=linkedin" title="Register with LinkedIn">
+                    <i class="fa-brands fa-linkedin-in"></i>
+                </a>
             </div>
         </form>
     </div>
 
     <!-- ── Toggle Box ── -->
     <div class="toggle-box">
-        <!-- Toggle Left (shown when NOT .active) -->
         <div class="toggle-panel toggle-left">
             <div class="site-logo">ANI<span>WATCH</span> PH</div>
             <h1>Hello, Nakama!</h1>
             <p>Don't have an account yet?<br>Join us and start watching!</p>
             <button class="btn register-btn">Register</button>
         </div>
-
-        <!-- Toggle Right (shown when .active) -->
         <div class="toggle-panel toggle-right">
             <div class="site-logo">ANI<span>WATCH</span> PH</div>
             <h1>Welcome Back!</h1>

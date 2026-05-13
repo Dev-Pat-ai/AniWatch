@@ -1,3 +1,4 @@
+<!-- aniwatch/auth_check.php -->
 <?php
 // ============================================================
 //  auth_check.php  |  Session Guard
