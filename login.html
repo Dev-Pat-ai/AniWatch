@@ -1,0 +1,144 @@
+<!--
+    Name: John Patrick C. De La Peña
+    Course: BSCS 3-1
+    Activity 2 - Styling Websites with CSS
+    Date: March 13, 2026
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Sign up form</title>
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+
+        <!-- Login Form -->
+        <div class="form-box login">
+            <form action="#">
+                <h1>Login</h1>
+
+                <!-- Show OAuth error messages if redirected back with ?error= -->
+                <?php if (!empty($_GET['error'])): ?>
+                <p style="color:#e74c3c; font-size:13px; margin-bottom:8px;">
+                    <?php
+                        $errors = [
+                            'oauth_failed'     => 'OAuth sign-in failed. Please try again.',
+                            'token_failed'     => 'Could not retrieve access token. Please try again.',
+                            'no_email'         => 'Your account has no public email. Please use a different sign-in method.',
+                            'invalid_provider' => 'Unknown sign-in provider.',
+                        ];
+                        $key = htmlspecialchars($_GET['error']);
+                        echo $errors[$key] ?? 'An unknown error occurred.';
+                    ?>
+                </p>
+                <?php endif; ?>
+
+                <div class="input-box">
+                    <input type="text" placeholder="Username" required>
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" placeholder="Password" required>
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div class="forgot-link">
+                    <a href="#">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn">Login</button>
+                <p class="social-icon">Or Login with social platforms</p>
+
+                <!-- ── Social OAuth links ── -->
+                <div class="social-icons">
+                    <a href="oauth_init.php?provider=google"   title="Sign in with Google">
+                        <i class="fa-brands fa-google"></i>
+                    </a>
+                    <a href="oauth_init.php?provider=facebook" title="Sign in with Facebook">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </a>
+                    <a href="oauth_init.php?provider=github"   title="Sign in with GitHub">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <a href="oauth_init.php?provider=linkedin" title="Sign in with LinkedIn">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Register Form -->
+        <div class="form-box register">
+            <form action="#">
+                <h1>Registration</h1>
+                <div class="input-box">
+                    <input type="text" placeholder="Username" required>
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="input-box">
+                    <input type="email" placeholder="Email" required>
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" placeholder="Password" required>
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <button type="submit" class="btn">Register</button>
+                <p class="social-icon">Or Register with social platforms</p>
+
+                <!-- ── Social OAuth links (same endpoints, auto-register new users) ── -->
+                <div class="social-icons">
+                    <a href="oauth_init.php?provider=google"   title="Register with Google">
+                        <i class="fa-brands fa-google"></i>
+                    </a>
+                    <a href="oauth_init.php?provider=facebook" title="Register with Facebook">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </a>
+                    <a href="oauth_init.php?provider=github"   title="Register with GitHub">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <a href="oauth_init.php?provider=linkedin" title="Register with LinkedIn">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Toggle Box -->
+        <div class="toggle-box">
+
+            <!-- Toggle Panel Left -->
+            <div class="toggle-panel toggle-left">
+                <h1>Hello, Welcome!</h1>
+                <p>Don't have an account?</p>
+                <button class="btn register-btn">Register</button>
+            </div>
+
+            <!-- Toggle Panel Right -->
+            <div class="toggle-panel toggle-right">
+                <h1>Welcome Back!</h1>
+                <p>Already have an account? Login to continue.</p>
+                <button class="btn login-btn">Login</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const container = document.querySelector('.container');
+        const registerBtn = document.querySelector('.register-btn');
+        const loginBtn = document.querySelector('.login-btn');
+
+        registerBtn.addEventListener('click', () => {
+            container.classList.add('active');
+        });
+
+        loginBtn.addEventListener('click', () => {
+            container.classList.remove('active');
+        });
+    </script>
+</body>
+</html>
