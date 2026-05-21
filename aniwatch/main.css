@@ -454,6 +454,70 @@ body {
 .flash-success { background: rgba(46,204,113,0.12); color: var(--success); border: 1px solid rgba(46,204,113,0.3); }
 .flash-error   { background: rgba(231,76,60,0.12);  color: var(--danger);  border: 1px solid rgba(231,76,60,0.3); }
 
+.ajax-feedback {
+    min-height: 42px;
+    margin-bottom: 18px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.ajax-feedback.loading {
+    color: var(--accent);
+    background: rgba(116,148,236,0.12);
+    border-color: rgba(116,148,236,0.3);
+}
+
+.ajax-feedback.success {
+    color: var(--success);
+    background: rgba(46,204,113,0.12);
+    border-color: rgba(46,204,113,0.3);
+}
+
+.ajax-feedback.error {
+    color: var(--danger);
+    background: rgba(231,76,60,0.12);
+    border-color: rgba(231,76,60,0.3);
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(116,148,236,0.25);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-state {
+    grid-column: 1 / -1;
+    min-height: 180px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.ajax-empty {
+    grid-column: 1 / -1;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* Admin Dashboard */
 .admin-stats {
     display: grid;
