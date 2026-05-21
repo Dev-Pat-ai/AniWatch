@@ -99,6 +99,18 @@ body {
 
 .user-badge i { color: var(--accent); font-size: 18px; }
 
+.role-pill {
+    background: rgba(116,148,236,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(116,148,236,0.3);
+    border-radius: 50px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
 .btn-logout {
     padding: 8px 18px;
     background: transparent;
@@ -441,6 +453,69 @@ body {
 }
 .flash-success { background: rgba(46,204,113,0.12); color: var(--success); border: 1px solid rgba(46,204,113,0.3); }
 .flash-error   { background: rgba(231,76,60,0.12);  color: var(--danger);  border: 1px solid rgba(231,76,60,0.3); }
+
+/* Admin Dashboard */
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.stat-card .label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.stat-card .value {
+    color: var(--text);
+    font-size: 30px;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 13px;
+}
+
+.admin-table th {
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.admin-table td { color: var(--text); }
+.admin-table tr:last-child td { border-bottom: none; }
+
+.admin-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
 /* ── Form Pages (Add / Edit) ── */
 .form-page {

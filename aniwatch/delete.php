@@ -4,7 +4,7 @@
 //  AniWatch PH  –  Shows confirmation page before deleting
 // ============================================================
 
-require_once 'auth_check.php';
+require_once 'admin_check.php';
 require_once 'db.php';
 
 $id = (int)($_GET['id'] ?? 0);

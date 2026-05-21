@@ -4,7 +4,7 @@
 //  AniWatch PH
 // ============================================================
 
-require_once 'auth_check.php';
+require_once 'admin_check.php';
 require_once 'db.php';
 
 $error  = '';

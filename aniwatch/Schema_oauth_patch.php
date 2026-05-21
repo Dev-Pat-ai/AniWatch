@@ -26,4 +26,12 @@ ALTER TABLE users
 -- 4. Index for fast look-up by provider + provider_id
 CREATE INDEX IF NOT EXISTS idx_users_provider
     ON users (provider, provider_id);
+
+-- 5. Add roles for admin/user access
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS role ENUM('user','admin') DEFAULT 'user'
+    AFTER email;
+
+-- Promote one account manually after replacing the username.
+-- UPDATE users SET role = 'admin' WHERE username = 'your_admin_username';
  

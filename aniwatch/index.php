@@ -7,6 +7,8 @@
 require_once 'auth_check.php';
 require_once 'db.php';
 
+$isAdmin = ($_SESSION['role'] ?? 'user') === 'admin';
+
 // Flash message from redirect
 $flash        = $_SESSION['flash']      ?? '';
 $flash_type   = $_SESSION['flash_type'] ?? 'success';
@@ -61,9 +63,11 @@ $total     = $totalStmt->fetchColumn();
     <section class="hero">
         <div class="hero-label">🎌 Free Anime Streaming</div>
         <h1>Watch Anime<br><span>Anytime, Anywhere</span></h1>
-        <p>Explore your favorite anime titles — completely free. Add, manage, and stream anime in one place.</p>
+        <p>Explore your favorite anime titles — completely free. Stream anime from the library anytime.</p>
         <div class="hero-actions">
-            <a href="add.php" class="btn-primary"><i class="fa-solid fa-plus"></i> Add Anime</a>
+            <?php if ($isAdmin): ?>
+                <a href="admin.php" class="btn-primary"><i class="fa-solid fa-gauge-high"></i> Admin Dashboard</a>
+            <?php endif; ?>
             <a href="#anime-list" class="btn-secondary"><i class="fa-solid fa-play"></i> Browse Library</a>
         </div>
     </section>
@@ -153,12 +157,14 @@ $total     = $totalStmt->fetchColumn();
                                 <a href="watch.php?id=<?= $anime['id'] ?>" class="oa-watch">
                                     <i class="fa-solid fa-play"></i> Watch
                                 </a>
-                                <a href="edit.php?id=<?= $anime['id'] ?>" class="oa-edit">
-                                    <i class="fa-solid fa-pen"></i> Edit
-                                </a>
-                                <a href="delete.php?id=<?= $anime['id'] ?>" class="oa-del">
-                                    <i class="fa-solid fa-trash"></i>
-                                </a>
+                                <?php if ($isAdmin): ?>
+                                    <a href="edit.php?id=<?= $anime['id'] ?>" class="oa-edit">
+                                        <i class="fa-solid fa-pen"></i> Edit
+                                    </a>
+                                    <a href="delete.php?id=<?= $anime['id'] ?>" class="oa-del">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

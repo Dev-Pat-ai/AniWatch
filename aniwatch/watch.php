@@ -7,6 +7,8 @@
 require_once 'auth_check.php';
 require_once 'db.php';
 
+$isAdmin = ($_SESSION['role'] ?? 'user') === 'admin';
+
 $id = (int)($_GET['id'] ?? 0);
 
 if ($id <= 0) {
@@ -78,7 +80,10 @@ if (!empty($anime['genre'])) {
                     <i class="fa-solid fa-video-slash"></i>
                 </div>
                 <p style="text-align:center;color:var(--muted);margin-top:12px;font-size:14px;">
-                    No video URL provided. <a href="edit.php?id=<?= $id ?>" style="color:var(--accent);">Add one</a>
+                    No video URL provided.
+                    <?php if ($isAdmin): ?>
+                        <a href="edit.php?id=<?= $id ?>" style="color:var(--accent);">Add one</a>
+                    <?php endif; ?>
                 </p>
             <?php endif; ?>
 
@@ -169,12 +174,14 @@ if (!empty($anime['genre'])) {
             </ul>
 
             <div class="watch-actions">
-                <a href="edit.php?id=<?= $id ?>" class="btn-primary" style="width:100%;justify-content:center;">
-                    <i class="fa-solid fa-pen"></i> Edit Anime
-                </a>
-                <a href="delete.php?id=<?= $id ?>" class="btn-danger" style="width:100%;justify-content:center;">
-                    <i class="fa-solid fa-trash"></i> Delete Anime
-                </a>
+                <?php if ($isAdmin): ?>
+                    <a href="edit.php?id=<?= $id ?>" class="btn-primary" style="width:100%;justify-content:center;">
+                        <i class="fa-solid fa-pen"></i> Edit Anime
+                    </a>
+                    <a href="delete.php?id=<?= $id ?>" class="btn-danger" style="width:100%;justify-content:center;">
+                        <i class="fa-solid fa-trash"></i> Delete Anime
+                    </a>
+                <?php endif; ?>
                 <a href="index.php" class="btn-secondary" style="width:100%;justify-content:center;">
                     <i class="fa-solid fa-grid-2"></i> Back to Library
                 </a>

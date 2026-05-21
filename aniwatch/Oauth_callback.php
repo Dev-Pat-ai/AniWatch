@@ -65,7 +65,7 @@ if (!$email) {
 }
 
 // ── 4. Look up or create the user  (PDO version) ──────────────
-$stmt = $pdo->prepare("SELECT id, username FROM users WHERE email = ? LIMIT 1");
+$stmt = $pdo->prepare("SELECT id, username, role FROM users WHERE email = ? LIMIT 1");
 $stmt->execute([$email]);
 $user = $stmt->fetch();   // PDO::FETCH_ASSOC is set in db.php
 
@@ -87,6 +87,7 @@ if ($user) {
     $user = [
         'id'       => (int) $pdo->lastInsertId(),
         'username' => $username,
+        'role'     => 'user',
     ];
 }
 
@@ -94,6 +95,7 @@ if ($user) {
 $_SESSION['user_id']  = $user['id'];
 $_SESSION['username'] = $user['username'];
 $_SESSION['email']    = $email;
+$_SESSION['role']     = $user['role'] ?? 'user';
 
 header('Location: index.php');
 exit;

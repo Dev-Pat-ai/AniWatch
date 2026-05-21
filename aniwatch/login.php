@@ -65,13 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (empty($username) || empty($password)) {
         $error = "Please fill in all fields.";
     } else {
-        $stmt = $pdo->prepare("SELECT id, username, password FROM users WHERE username = ?");
+        $stmt = $pdo->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
         $stmt->execute([$username]);
         $user = $stmt->fetch();
 
         if ($user && $user['password'] !== null && password_verify($password, $user['password'])) {
             $_SESSION['user_id']  = $user['id'];
             $_SESSION['username'] = $user['username'];
+            $_SESSION['role']     = $user['role'] ?? 'user';
             header("Location: index.php");
             exit();
         } elseif ($user && $user['password'] === null) {

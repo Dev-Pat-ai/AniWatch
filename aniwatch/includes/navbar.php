@@ -4,6 +4,7 @@
 //  Include after session_start() on every protected page
 // ============================================================
 ?>
+<?php $isAdmin = ($_SESSION['role'] ?? 'user') === 'admin'; ?>
 <nav class="navbar">
     <a href="index.php" class="nav-logo">ANI<span>WATCH</span> PH</a>
 
@@ -11,15 +12,21 @@
         <a href="index.php"  class="<?= basename($_SERVER['PHP_SELF']) === 'index.php'  ? 'active' : '' ?>">
             <i class="fa-solid fa-house"></i> Home
         </a>
-        <a href="add.php"    class="<?= basename($_SERVER['PHP_SELF']) === 'add.php'    ? 'active' : '' ?>">
-            <i class="fa-solid fa-plus"></i> Add Anime
-        </a>
+        <?php if ($isAdmin): ?>
+            <a href="admin.php" class="<?= basename($_SERVER['PHP_SELF']) === 'admin.php' ? 'active' : '' ?>">
+                <i class="fa-solid fa-gauge-high"></i> Admin
+            </a>
+            <a href="add.php" class="<?= basename($_SERVER['PHP_SELF']) === 'add.php' ? 'active' : '' ?>">
+                <i class="fa-solid fa-plus"></i> Add Anime
+            </a>
+        <?php endif; ?>
     </div>
 
     <div class="nav-right">
         <div class="user-badge">
             <i class="fa-solid fa-circle-user"></i>
             <?= htmlspecialchars($_SESSION['username'] ?? 'Guest') ?>
+            <span class="role-pill"><?= $isAdmin ? 'Admin' : 'User' ?></span>
         </div>
         <a href="logout.php">
             <button class="btn-logout">
